@@ -1,0 +1,54 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
+div#hud {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    color: white;
+    font-size: large;
+}
+
+label, input[type="number"] {
+    appearance: textfield;
+    font-size: 5em;
+    border: none;
+    background-color: rgba(0, 255, 255, 0);
+    color: lightskyblue;
+    text-shadow: black 5px 5px;
+    width: 4em;
+}
+
+h1#ip {
+    position: absolute;
+    bottom: 0px;
+    left: 50%;
+    color: white;
+    transform: translate(-50%, -50%);
+}
+
+button#counter {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    background-color: lightskyblue;
+    border: none;
+    color: white;
+    padding: 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+}
