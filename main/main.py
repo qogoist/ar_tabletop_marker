@@ -47,13 +47,7 @@ def game(player):
     return render_template("game.html", player=player)
 
 def startup():
-    calib_image = cv2.imread("main/local/pattern_chessboard.png")
-    win = "Calibration"
-    cv2.namedWindow(win, cv2.WINDOW_NORMAL)
-    cv2.imshow(win, calib_image)
-
-    print("Showing calibration pattern, please adjust it so it is visible on the projector.")
-    cmd = input("Press enter to continue with calibration: ")
+    cmd = input("Press enter to start calibration: ")
 
     cameraMtx, distCoeffs = calibration.calibrate()
     print(cameraMtx)

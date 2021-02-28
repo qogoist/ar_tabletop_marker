@@ -3,6 +3,12 @@ import numpy as np
 import imutils
 
 def calibrate():
+  calib_image = cv2.imread("main/local/pattern_chessboard.png")
+  win = "Calibration"
+  cv2.namedWindow(win, cv2.WINDOW_NORMAL)
+  
+  print("Showing calibration pattern, please adjust it so it is visible on the projector.")
+
   criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
   objp = np.zeros((6*9,3), np.float32)
@@ -18,6 +24,7 @@ def calibrate():
   num = 10
   found = 0
   while(found < num):
+      cv2.imshow(win, calib_image)
       ret, frame = cap.read()
       gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
       frame_copy = frame.copy()
@@ -38,6 +45,9 @@ def calibrate():
       
       if cv2.waitKey(1) == ord('q'):
           break
+  
+  print("Camera calibration complete.")
+  input("Press enter to continue...")
 
   cap.release()
   cv2.destroyAllWindows()
