@@ -2,12 +2,17 @@ import cv2
 import numpy as np
 import imutils
 
-def calibrate():
-  calib_image = cv2.imread("main/local/pattern_chessboard.png")
-  win = "Calibration"
-  cv2.namedWindow(win, cv2.WINDOW_NORMAL)
+projMtx = []
+mtx = []
+dist = []
+
+def calibrateCamera():
+  global mtx, dist, projMtx
   
-  print("Showing calibration pattern, please adjust it so it is visible on the projector.")
+  calib_image = cv2.imread("main/local/pattern_chessboard.png")
+  cv2.namedWindow("Calibration", cv2.WND_PROP_FULLSCREEN)
+  cv2.setWindowProperty("Calibration", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+  cv2.moveWindow("Calibration", 1920, 0)
 
   criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
@@ -24,7 +29,7 @@ def calibrate():
   num = 10
   found = 0
   while(found < num):
-      cv2.imshow(win, calib_image)
+      cv2.imshow("Calibration", calib_image)
       ret, frame = cap.read()
       gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
       frame_copy = frame.copy()
@@ -49,31 +54,95 @@ def calibrate():
   cap.release()
   cv2.destroyAllWindows()
 
-  #Edge Detection
-  thresh = cv2.threshold(gray, 180, )
-
   ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
-
-  ret, dest_points = cv2.findChessboardCorners(calib_image, (9,6), None, None)
-  calib_image_gray = cv2.cvtColor(calib_image, cv2.COLOR_BGR2GRAY)
-  dest_points2 = cv2.cornerSubPix(calib_image_gray, dest_points, (11,11), (-1,-1), criteria)
-  cv2.drawChessboardCorners(calib_image, (9,6), dest_points2, ret)
-
-  projMtx, status = cv2.findHomography(corners2, dest_points2)
-
-  height, width, channels = frame.shape
-
-  testImg = cv2.warpPerspective(frame_copy, projMtx, (10*width, 10*height))
-
-  # cv2.namedWindow(, cv2.WINDOW_NORMAL)
-  # cv2.imshow(win, testImg)
-  cv2.namedWindow("Test", cv2.WINDOW_NORMAL)
-  cv2.imwrite("TestImage.jpg", testImg)
-  cv2.imshow("Test", testImg)
-  cv2.waitKey()
-
-  cv2.destroyAllWindows()
 
   return mtx, dist
 
-calibrate()
+tr = 14
+e = 0.04
+
+
+def updateThresh(val):
+  global tr
+  tr = val
+
+
+def updateE(val):
+  global e
+  e = val * 0.01
+
+
+def detectRectangle(cnts):
+  for c in cnts:
+    peri = cv2.arcLength(c, True)
+    approx = cv2.approxPolyDP(c, e * peri, True)
+
+    if len(approx) == 4:
+      return approx, True
+      
+  return -1, False
+
+def calibrateProjection():
+  global mtx, dist, projMtx
+
+  white = np.zeros((1920, 1080, 3), np.uint8)
+  white[:] = (255, 255, 255)
+
+  cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+  cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+  cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+
+  # Create Window
+  win = "Contour Detection"
+  cv2.namedWindow(win)
+  cv2.createTrackbar('Thresh:', win, tr, 255, updateThresh)
+  cv2.createTrackbar('Epsilon:', win, int(e * 100), 100, updateE)
+
+  cv2.namedWindow("Calibration", cv2.WND_PROP_FULLSCREEN)
+  cv2.setWindowProperty("Calibration", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+  cv2.moveWindow("Calibration", 1920, 0)
+
+  print("Adjust threshold until the border matches the projected image")
+
+  while(cap.isOpened):
+    cv2.imshow("Calibration", white)
+    ret, frame = cap.read()
+    height, width, channels = frame.shape
+
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    thresh = cv2.threshold(blur, tr, 255, cv2.THRESH_BINARY)[1]
+
+    cv2.imshow(win, thresh)
+
+    contour_frame = frame.copy()
+
+    cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(cnts)
+
+    for c in cnts:
+        cv2.drawContours(contour_frame, [c], -1, (0,255,0), 2)
+
+    cv2.imshow("Contours", contour_frame)
+    
+    outer_rectangle, detected = detectRectangle(cnts)
+
+    if detected:
+        destination_pts = np.array([[0, 0], [0, 1079], [1919, 1079], [1919, 0]])
+        projMtx, status = cv2.findHomography(outer_rectangle, destination_pts)
+        adjustedImg = cv2.warpPerspective(frame, projMtx, (1920, 1080))
+        cv2.imshow("Adjusted", adjustedImg)
+
+
+    key = cv2.waitKey(1)
+    if key == ord("q"):
+        break
+
+  # Release capture and close windows
+  cap.release()
+  cv2.destroyAllWindows()
+
+  return projMtx
+
+# calibrateCamera()
+# calibrateProjection()

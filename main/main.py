@@ -17,6 +17,7 @@ app.config["DEBUG"] = True
 #globals
 cameraMtx = []
 distCoeffs = []
+projMtx = []
 
 players = []
 
@@ -47,15 +48,23 @@ def game(player):
     return render_template("game.html", player=player)
 
 def startup():
+    global projMtx, cameraMtx, distCoeffs
     cmd = input("Press enter to start calibration: ")
 
-    cameraMtx, distCoeffs = calibration.calibrate()
+    cameraMtx, distCoeffs = calibration.calibrateCamera()
 
-    print("Calibration complete with the following matrices...")
+    print("Camera calibration complete with the following matrices...")
     print(cameraMtx)
     print(distCoeffs)
     
     input("Press enter to continue...")
+
+    projMtx = calibration.calibrateProjection()
+
+    print("Projection calibrated with the following matrix...")
+    print(projMtx)
+
+    input ("Press enter to continue...")
 
 startup()
 
