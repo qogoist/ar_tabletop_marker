@@ -50,10 +50,12 @@ def startup():
     cmd = input("Press enter to start calibration: ")
 
     cameraMtx, distCoeffs = calibration.calibrate()
+
+    print("Calibration complete with the following matrices...")
     print(cameraMtx)
     print(distCoeffs)
     
-    cv2.waitKey()
+    input("Press enter to continue...")
 
 startup()
 
