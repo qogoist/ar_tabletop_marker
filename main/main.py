@@ -68,6 +68,17 @@ def startup():
 
 startup()
 
+def confirm_matrices():
+    global projMtx, cameraMtx, distCoeffs
+    print("Projetion Matrix:")
+    print(projMtx)
+    print("Camera Matrix:")
+    print(cameraMtx)
+    print("Distortion Coefficients:")
+    print(distCoeffs)
+
+confirm_matrices()
+
 # Start a new Thread and run it in the background
 # th = threading.Thread(target=marker_recognition.app)
 # th.start()
