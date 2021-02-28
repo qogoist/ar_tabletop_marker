@@ -18,8 +18,8 @@ def calibrate():
   imgpoints = []
 
   cap = cv2.VideoCapture(1)
-  cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-  cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+  cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+  cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
   num = 10
   found = 0
@@ -37,7 +37,7 @@ def calibrate():
         corners2 = cv2.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
         imgpoints.append(corners2)
 
-        frame_copy = cv2.drawChessboardCorners(frame, (9, 6), corners2, foundCorners)
+        cv2.drawChessboardCorners(frame_copy, (9, 6), corners2, foundCorners)
 
         found += 1
 
@@ -46,17 +46,34 @@ def calibrate():
       if cv2.waitKey(1) == ord('q'):
           break
   
-  dest_poitns = cv2.findChessboardCorners(calib_image, (9,6), None, None)
-  projMtx, status = cv2.findHomography(corners2, calib_image)
-
-  testImg = cv2.warpPerspective(frame, projMtx, (frame.height, frame.width))
-
-
-
-
   cap.release()
   cv2.destroyAllWindows()
 
+  #Edge Detection
+  thresh = cv2.threshold(gray, 180, )
+
   ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
 
+  ret, dest_points = cv2.findChessboardCorners(calib_image, (9,6), None, None)
+  calib_image_gray = cv2.cvtColor(calib_image, cv2.COLOR_BGR2GRAY)
+  dest_points2 = cv2.cornerSubPix(calib_image_gray, dest_points, (11,11), (-1,-1), criteria)
+  cv2.drawChessboardCorners(calib_image, (9,6), dest_points2, ret)
+
+  projMtx, status = cv2.findHomography(corners2, dest_points2)
+
+  height, width, channels = frame.shape
+
+  testImg = cv2.warpPerspective(frame_copy, projMtx, (10*width, 10*height))
+
+  # cv2.namedWindow(, cv2.WINDOW_NORMAL)
+  # cv2.imshow(win, testImg)
+  cv2.namedWindow("Test", cv2.WINDOW_NORMAL)
+  cv2.imwrite("TestImage.jpg", testImg)
+  cv2.imshow("Test", testImg)
+  cv2.waitKey()
+
+  cv2.destroyAllWindows()
+
   return mtx, dist
+
+calibrate()
