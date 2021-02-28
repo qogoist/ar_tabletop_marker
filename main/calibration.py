@@ -46,8 +46,13 @@ def calibrate():
       if cv2.waitKey(1) == ord('q'):
           break
   
-  print("Camera calibration complete.")
-  input("Press enter to continue...")
+  dest_poitns = cv2.findChessboardCorners(calib_image, (9,6), None, None)
+  projMtx, status = cv2.findHomography(corners2, calib_image)
+
+  testImg = cv2.warpPerspective(frame, projMtx, (frame.height, frame.width))
+
+
+
 
   cap.release()
   cv2.destroyAllWindows()
