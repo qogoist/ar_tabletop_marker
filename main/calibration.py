@@ -142,6 +142,21 @@ def calibrateProjection():
   cap.release()
   cv2.destroyAllWindows()
 
+
+  ######### UNCOMMENT TO SAVE DIFFERENT PROJECTION IMAGES  #############
+  # cv2.imwrite("Testimage.jpg", adjustedImg)
+
+  # h, w = frame.shape[:2]
+  # newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
+  # dst = cv2.undistort(adjustedImg, mtx, dist, None, newcameramtx)
+
+  # cv2.imwrite("Testimage2.jpg", dst)
+
+  # x,y,w,h = roi
+  # dst = dst[y:y+h, x:x+w]
+  
+  # cv2.imwrite("Testimage3.jpg", dst)
+
   return projMtx
 
 # calibrateCamera()
