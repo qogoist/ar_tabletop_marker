@@ -26,7 +26,7 @@ def calibrateCamera():
   cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
   cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
-  num = 10
+  num = 20
   found = 0
   while(found < num):
       cv2.imshow("Calibration", calib_image)
@@ -85,7 +85,7 @@ def detectRectangle(cnts):
 def calibrateProjection():
   global mtx, dist, projMtx
 
-  white = np.zeros((1920, 1080, 3), np.uint8)
+  white = np.zeros((1280, 720, 3), np.uint8)
   white[:] = (255, 255, 255)
 
   cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
@@ -123,15 +123,15 @@ def calibrateProjection():
     for c in cnts:
         cv2.drawContours(contour_frame, [c], -1, (0,255,0), 2)
 
-    cv2.imshow("Contours", contour_frame)
+    cv2.imshow(win, contour_frame)
     
     outer_rectangle, detected = detectRectangle(cnts)
 
     if detected:
-        destination_pts = np.array([[0, 0], [0, 1079], [1919, 1079], [1919, 0]])
+        destination_pts = np.array([[0, 0], [0, 719], [1279, 719], [1279, 0]])
         projMtx, status = cv2.findHomography(outer_rectangle, destination_pts)
-        adjustedImg = cv2.warpPerspective(frame, projMtx, (1920, 1080))
-        cv2.imshow("Adjusted", adjustedImg)
+        adjustedImg = cv2.warpPerspective(frame, projMtx, (1280, 720))
+        # cv2.imshow(win, adjustedImg)
 
 
     key = cv2.waitKey(1)

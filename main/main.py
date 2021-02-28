@@ -70,7 +70,7 @@ startup()
 
 def confirm_matrices():
     global projMtx, cameraMtx, distCoeffs
-    print("Projetion Matrix:")
+    print("Projection Matrix:")
     print(projMtx)
     print("Camera Matrix:")
     print(cameraMtx)
@@ -78,6 +78,8 @@ def confirm_matrices():
     print(distCoeffs)
 
 confirm_matrices()
+
+marker_recognition.detect(cameraMtx, distCoeffs, projMtx)
 
 # Start a new Thread and run it in the background
 # th = threading.Thread(target=marker_recognition.app)
