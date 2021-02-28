@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>AR Tabletop thingamagic</title>
+    <link
+      rel="stylesheet"
+      href="{{url_for('static', filename='styles.css')}}"
+    />
+    <script src="{{url_for('static', filename='game/FudgeCore/FudgeCore.js')}}"></script>
+    <script src="{{url_for('static', filename='game/FudgeUserInterface/FudgeUserInterface.js')}}"></script>
+    <script src="{{url_for('static', filename='game/Hud.js')}}"></script>
+    <script src="{{url_for('static', filename='game/Main.js')}}"></script>
+  </head>
+
+  <body>
+    <canvas></canvas>
+
+    <img
+      class="topleft"
+      src="{{url_for('static', filename='markers/tag_{}.jpg'.format(player.id))}}"
+    />
+
+    <img
+      class="botright"
+      src="{{url_for('static', filename='markers/tag_{}.jpg'.format(player.id))}}"
+    />
+
+    <!-- <h1 id="ip">
+      {{ request.host.split(':')[0] }}:{{ request.host.split(':')[1] }}
+    </h1>
+
+    <div id="hud">
+      <label for="clicks">{{ player.name }}: </label>
+      <input type="number" key="clicks" disabled />
+    </div>
+
+    <button type="button" id="counter">Click Me!</button> -->
+  </body>
+</html>
