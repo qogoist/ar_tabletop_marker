@@ -9,50 +9,39 @@ body {
   overflow: hidden;
 }
 
-div#hud {
-  position: absolute;
-  top: 0px;
-  left: 50%;
-  color: white;
-  font-size: large;
-  transform: translateX(-50%);
-}
-
-label,
-input[type="number"] {
-  appearance: textfield;
-  font-size: 4em;
-  border: none;
-  background-color: rgba(0, 255, 255, 0);
-  color: lightskyblue;
-  text-shadow: black 5px 5px;
-  width: 5em;
-}
-
-h1#ip {
-  position: absolute;
-  bottom: 0px;
-  left: 50%;
-  color: white;
-  transform: translate(-50%, -50%);
-}
-
-button#counter {
+#new_player {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-
-  background-color: lightskyblue;
-  border: none;
-  color: white;
-  padding: 20px;
   text-align: center;
-  text-decoration: none;
+}
+
+#new_player label,
+#new_player input {
   display: inline-block;
-  font-size: 16px;
-  margin: 4px 2px;
-  cursor: pointer;
+  margin-bottom: 1em;
+}
+
+#rotate_right,
+#rotate_left {
+  position: absolute;
+  top: 50%;
+  /* width: 4em;
+  height: 4em; */
+  background-color: green;
+  color: white;
+  border: none;
+  font-size: 5em;
+}
+
+#rotate_right {
+  top: 50%;
+  right: 10px;
+}
+
+#rotate_left {
+  left: 10px;
 }
 
 img.topleft {

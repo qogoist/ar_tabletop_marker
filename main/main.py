@@ -9,6 +9,7 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify
 
 import marker_recognition
 import calibration
+from Player import Player
 
 
 app = Flask(__name__)
@@ -32,22 +33,42 @@ def home():
 def new_player():
     name = request.form["name"]
     player_id = len(players)
-    player_obj = {
-        "name": name,
-        "id": player_id
-    }
+    player = Player(player_id, name)
 
-    players.append(player_obj)
+    print(player)
+
+    players.append(player)
 
     print("Players...")
     print(players)
 
-    return redirect(url_for("game", player=json.dumps(player_obj)))
+    return redirect(url_for("game", player=json.dumps(player.__dict__)))
 
-@app.route("/game/<player>", methods=["GET"])
+@app.route("/game/<player>", methods=["GET", "POST"])
 def game(player):
     player = json.loads(player)
-    return render_template("game.html", player=player)
+    
+    try:
+        player = players[player["id"]]
+    except:
+        return redirect("/")
+
+    if request.method == "GET":
+        return render_template("game.html", player=player)
+    
+    if request.method == "POST":
+        return jsonify(player.__dict__)
+
+@app.route("/<player_id>/rotate:<rotation>", methods=["POST"])
+def rotate(player_id, rotation):
+    player_id = int(player_id)
+    rotation = int(rotation)
+    player = players[player_id]
+    player.rotation = rotation
+    print("New Rotation for {}: {}".format(player.name, rotation))
+    print(players)
+    return "OK"
+
 
 def startup():
     global camera, projMtx, cameraMtx, distCoeffs
@@ -68,7 +89,7 @@ def startup():
 
     input ("Press enter to continue...")
 
-startup()
+# startup()
 
 def confirm_matrices():
     global projMtx, cameraMtx, distCoeffs
@@ -79,12 +100,12 @@ def confirm_matrices():
     print("Distortion Coefficients:")
     print(distCoeffs)
 
-confirm_matrices()
+# confirm_matrices()
 
-marker_recognition.detect(camera, cameraMtx, distCoeffs, projMtx)
+# marker_recognition.detect(camera, cameraMtx, distCoeffs, projMtx)
 
 # Start a new Thread and run it in the background
 # th = threading.Thread(target=marker_recognition.app)
 # th.start()
-# app.run(host="0.0.0.0")
+app.run(host="0.0.0.0")
 # th.join() 

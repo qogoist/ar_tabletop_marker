@@ -17,7 +17,39 @@ while(True):
     
     corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=arucoParameters)
     
-    frame = aruco.drawDetectedMarkers(frame, corners, ids)
+    centers = []
+
+    if ids is not None:
+        for i in range(0, len(ids)):
+            sx = 0
+            sy = 0
+            for c in corners[i][0]:
+                sx += c[0]
+                sy += c[1]
+
+            cx = sx / 4
+            cy = sy / 4
+            center = {
+                "id": i,
+                "point": (int(cx), int(cy))
+            }
+            centers.append(center)
+
+        for i in range (0, len(centers)):
+            indexes = [i for i,x in enumerate(centers) if x["id"] == centers[i]["id"]]
+
+            if len(indexes) != 2:
+                continue
+
+            point = [0, 0]
+            for j in indexes:
+                point[0] += centers[j]["point"][0]
+                point[1] += centers[j]["point"][1]
+
+            point = (int(point[0] / 2), int(point[1] / 2))
+
+            cv2.circle(frame, point, 40, (0, 255, 0), 2)
+
 
     cv2.imshow("Display", frame)
     

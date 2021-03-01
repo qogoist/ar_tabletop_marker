@@ -4,11 +4,16 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="{{url_for('static', filename='styles.css')}}"
+    />
+
     <title>Introduction</title>
   </head>
   <body>
     <h1>Welcome to Panzer Wars</h1>
-    <form action="{{ url_for('new_player') }}" method="post">
+    <form action="{{ url_for('new_player') }}" method="post" id="new_player">
       <label for="name">Please enter a name:</label></br>
       <input type="text" name="name" /></br>
       <input type="submit" value="Submit" />

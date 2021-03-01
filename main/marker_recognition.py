@@ -30,17 +30,38 @@ def detect(camera, cameraMtx, distCoeff, projMtx):
         arucoParameters = aruco.DetectorParameters_create()
         
         corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=arucoParameters)
+        centers = []
         
         if ids is not None:
             for i in range(0, len(ids)):
                 rvec, tvec, markerPoints = aruco.estimatePoseSingleMarkers(corners[i], 0.02, cameraMtx, distCoeff)
                 (rvec-tvec).any()
+                centers.append({
+                    "id": i,
+                    "point": tvec
+                })
+
                 aruco.drawAxis(frame, cameraMtx, distCoeff, rvec, tvec, 0.01)
                 
                 # Transform Marker and draw on transformed image.
                 rect = cv2.perspectiveTransform(corners[i], projMtx)
                 cv2.polylines(white, np.int32(rect), True, (0,255,0), 2)
                 cv2.fillPoly(white, np.int32(rect), (0,0,0))
+            
+            for i in range (0, len(centers)):
+                indexes = [i for i,x in enumerate(centers) if x["id"] == centers[i]["id"]]
+
+                if len(indexes) != 2:
+                    continue
+
+                point = [0, 0]
+                for j in indexes:
+                    point[0] += centers[j]["point"][0]
+                    point[1] += centers[j]["point"][1]
+
+                point = (int(point[0] / 2), int(point[1] / 2))
+
+                cv2.circle(frame, point, 40, (0, 255, 0), 2)
 
             # frame = aruco.drawDetectedMarkers(frame, corners, ids) # Draw marker on original frame
 
