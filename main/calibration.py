@@ -6,158 +6,189 @@ projMtx = []
 mtx = []
 dist = []
 
+
 def calibrateCamera(camera):
-  global mtx, dist, projMtx
-  
-  calib_image = cv2.imread("main/local/pattern_chessboard.png")
-  cv2.namedWindow("Calibration", cv2.WND_PROP_FULLSCREEN)
-  cv2.setWindowProperty("Calibration", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-  cv2.moveWindow("Calibration", 1920, 0)
+    global mtx, dist, projMtx
 
-  criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+    calib_image = cv2.imread("main/local/pattern_chessboard.png")
+    cv2.namedWindow("Calibration", cv2.WND_PROP_FULLSCREEN)
+    cv2.setWindowProperty(
+        "Calibration", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+    cv2.moveWindow("Calibration", 1920, 0)
 
-  objp = np.zeros((6*9,3), np.float32)
-  objp[:,:2] = np.mgrid[0:9,0:6].T.reshape(-1,2)
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+    patternsize = (9, 6)
 
-  objpoints = []
-  imgpoints = []
+    objp = np.zeros((patternsize[0] * patternsize[1], 3), np.float32)
+    objp[:, :2] = np.mgrid[0:patternsize[0], 0:patternsize[1]].T.reshape(-1, 2)
 
-  cap = cv2.VideoCapture(camera)
-  cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-  cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    objpoints = []
+    imgpoints = []
 
-  num = 20
-  found = 0
-  while(found < num):
-      cv2.imshow("Calibration", calib_image)
-      ret, frame = cap.read()
-      gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-      frame_copy = frame.copy()
+    cap = cv2.VideoCapture(camera, cv2.CAP_DSHOW)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
-      foundCorners, corners = cv2.findChessboardCorners(gray, (9,6), None, None)
+    num = 20
+    found = 0
+    while(found < num):
+        cv2.imshow("Calibration", calib_image)
+        ret, frame = cap.read()
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        frame_copy = frame.copy()
 
-      if foundCorners:
-        print("grid found")
-        objpoints.append(objp)
-        corners2 = cv2.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
-        imgpoints.append(corners2)
+        foundCorners, corners = cv2.findChessboardCorners(
+            frame, patternsize, None, None)
 
-        cv2.drawChessboardCorners(frame_copy, (9, 6), corners2, foundCorners)
+        if foundCorners:
+            print("grid found")
+            objpoints.append(objp)
+            corners2 = cv2.cornerSubPix(
+                gray, corners, (11, 11), (-1, -1), criteria)
+            imgpoints.append(corners2)
 
-        found += 1
+            cv2.drawChessboardCorners(
+                frame_copy, patternsize, corners2, foundCorners)
 
-      cv2.imshow("Img", frame_copy)
-      
-      if cv2.waitKey(1) == ord('q'):
-          break
-  
-  cap.release()
-  cv2.destroyAllWindows()
+            found += 1
 
-  ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+        cv2.imshow("Img", frame_copy)
 
-  return mtx, dist
+        if cv2.waitKey(1) == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
+        objpoints, imgpoints, gray.shape[::-1], None, None)
+
+    ret, calibCorners = cv2.findChessboardCorners(
+        calib_image, patternsize, None, None)
+    cv2.drawChessboardCorners(calib_image, patternsize, calibCorners, ret)
+
+    cv2.imwrite("CalibCorners.jpg", calib_image)
+
+    projMtx, status = cv2.findHomography(corners2, calibCorners)
+
+    h, w = calib_image.shape[:2]
+    warp = cv2.warpPerspective(frame, projMtx, (1280, 720))
+
+    cv2.imwrite("WarpTest.jpg", warp)
+
+    return mtx, dist, projMtx
+
 
 tr = 14
-e = 0.04
+blur = 5
 
 
 def updateThresh(val):
-  global tr
-  tr = val
+    global tr
+    tr = val
 
 
-def updateE(val):
-  global e
-  e = val * 0.01
+def updateBlur(val):
+    global blur
+    if val % 2 == 1:
+        blur = val
+    else:
+        blur = val + 1
 
 
 def detectRectangle(cnts):
-  for c in cnts:
-    peri = cv2.arcLength(c, True)
-    approx = cv2.approxPolyDP(c, e * peri, True)
+    for c in cnts:
+        peri = cv2.arcLength(c, True)
+        approx = cv2.approxPolyDP(c, 0.04 * peri, True)
 
-    if len(approx) == 4:
-      return approx, True
-      
-  return -1, False
+        if len(approx) == 4:
+            return approx, True
+
+    return -1, False
+
 
 def calibrateProjection(camera):
-  global mtx, dist, projMtx
+    global mtx, dist, projMtx
 
-  white = np.zeros((1280, 720, 3), np.uint8)
-  white[:] = (255, 255, 255)
+    white = np.zeros((1280, 720, 3), np.uint8)
+    white[:] = (255, 255, 255)
 
-  cap = cv2.VideoCapture(camera, cv2.CAP_DSHOW)
-  cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-  cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    cap = cv2.VideoCapture(camera, cv2.CAP_DSHOW)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
-  # Create Window
-  win = "Contour Detection"
-  cv2.namedWindow(win)
-  cv2.createTrackbar('Thresh:', win, tr, 255, updateThresh)
-  cv2.createTrackbar('Epsilon:', win, int(e * 100), 100, updateE)
+    # Create Window
+    win = "Contour Detection"
+    cv2.namedWindow(win)
+    cv2.createTrackbar('Thresh:', win, tr, 255, updateThresh)
+    cv2.createTrackbar('Blur:', win, blur, 50, updateBlur)
 
-  cv2.namedWindow("Calibration", cv2.WND_PROP_FULLSCREEN)
-  cv2.setWindowProperty("Calibration", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-  cv2.moveWindow("Calibration", 1920, 0)
+    cv2.namedWindow("Calibration", cv2.WND_PROP_FULLSCREEN)
+    cv2.setWindowProperty(
+        "Calibration", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+    cv2.moveWindow("Calibration", 1920, 0)
 
-  print("Adjust threshold until the border matches the projected image")
+    print("Adjust threshold until the border matches the projected image")
 
-  while(cap.isOpened):
-    cv2.imshow("Calibration", white)
-    ret, frame = cap.read()
-    height, width, channels = frame.shape
+    while(cap.isOpened):
+        cv2.imshow("Calibration", white)
+        ret, frame = cap.read()
+        height, width, channels = frame.shape
 
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (5, 5), 0)
-    thresh = cv2.threshold(blur, tr, 255, cv2.THRESH_BINARY)[1]
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        blurIm = cv2.GaussianBlur(gray, (blur, blur), 0)
+        thresh = cv2.threshold(blurIm, tr, 255, cv2.THRESH_BINARY)[1]
 
-    cv2.imshow(win, thresh)
+        # cv2.imshow(win, thresh)
 
-    contour_frame = frame.copy()
+        contour_frame = frame.copy()
 
-    cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    cnts = imutils.grab_contours(cnts)
+        cnts = cv2.findContours(
+            thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = imutils.grab_contours(cnts)
 
-    for c in cnts:
-        cv2.drawContours(contour_frame, [c], -1, (0,255,0), 2)
+        for c in cnts:
+            cv2.drawContours(contour_frame, [c], -1, (0, 255, 0), 2)
 
-    cv2.imshow(win, contour_frame)
-    
-    outer_rectangle, detected = detectRectangle(cnts)
+        cv2.imshow(win, contour_frame)
 
-    if detected:
-        destination_pts = np.array([[1279, 0], [0, 0], [0, 719], [1279, 719]])
-        projMtx, status = cv2.findHomography(outer_rectangle, destination_pts)
-        adjustedImg = cv2.warpPerspective(frame, projMtx, (1280, 720))
-        # cv2.imshow(win, adjustedImg)
+        outer_rectangle, detected = detectRectangle(cnts)
 
+        if detected:
+            destination_pts = np.array(
+                [[0, 0], [0, 719], [1279, 719], [1279, 0]])
+            projMtx, status = cv2.findHomography(
+                outer_rectangle, destination_pts)
+            adjustedImg = cv2.warpPerspective(frame, projMtx, (1280, 720))
+            # cv2.imshow(win, adjustedImg)
 
-    key = cv2.waitKey(1)
-    if key == ord("q"):
-        break
+        key = cv2.waitKey(1)
+        if key == ord("q"):
+            cap.release()
+            cv2.destroyAllWindows()
+            return False, -1
+        elif key == 13:
+            break
 
-  # Release capture and close windows
-  cap.release()
-  cv2.destroyAllWindows()
+    # Release capture and close windows
+    cap.release()
+    cv2.destroyAllWindows()
 
+    ######### UNCOMMENT TO SAVE DIFFERENT PROJECTION IMAGES  #############
+    # cv2.imwrite("Testimage.jpg", adjustedImg)
 
-  ######### UNCOMMENT TO SAVE DIFFERENT PROJECTION IMAGES  #############
-  cv2.imwrite("Testimage.jpg", adjustedImg)
+    # h, w = frame.shape[:2]
+    # newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
+    # dst = cv2.undistort(adjustedImg, mtx, dist, None, newcameramtx)
 
-  # h, w = frame.shape[:2]
-  # newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
-  # dst = cv2.undistort(adjustedImg, mtx, dist, None, newcameramtx)
+    # cv2.imwrite("Testimage2.jpg", dst)
 
-  # cv2.imwrite("Testimage2.jpg", dst)
+    # x,y,w,h = roi
+    # dst = dst[y:y+h, x:x+w]
 
-  # x,y,w,h = roi
-  # dst = dst[y:y+h, x:x+w]
-  
-  # cv2.imwrite("Testimage3.jpg", dst)
+    # cv2.imwrite("Testimage3.jpg", dst)
 
-  return projMtx
+    return True, projMtx
 
 # calibrateCamera()
 # calibrateProjection()

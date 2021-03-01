@@ -4,7 +4,7 @@ import imutils
 import time
 import cv2.aruco as aruco
 
-cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
@@ -14,9 +14,10 @@ while(True):
 
     aruco_dict = aruco.Dictionary_get(aruco.DICT_4X4_50)
     arucoParameters = aruco.DetectorParameters_create()
-    
-    corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=arucoParameters)
-    
+
+    corners, ids, rejectedImgPoints = aruco.detectMarkers(
+        gray, aruco_dict, parameters=arucoParameters)
+
     centers = []
 
     if ids is not None:
@@ -35,8 +36,9 @@ while(True):
             }
             centers.append(center)
 
-        for i in range (0, len(centers)):
-            indexes = [i for i,x in enumerate(centers) if x["id"] == centers[i]["id"]]
+        for i in range(0, len(centers)):
+            indexes = [i for i, x in enumerate(
+                centers) if x["id"] == centers[i]["id"]]
 
             if len(indexes) != 2:
                 continue
@@ -50,9 +52,8 @@ while(True):
 
             cv2.circle(frame, point, 40, (0, 255, 0), 2)
 
-
     cv2.imshow("Display", frame)
-    
+
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 cap.release()

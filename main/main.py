@@ -15,7 +15,7 @@ from Player import Player
 app = Flask(__name__)
 app.config["DEBUG"] = True
 
-#globals
+# globals
 cameraMtx = []
 distCoeffs = []
 projMtx = []
@@ -24,10 +24,13 @@ players = []
 
 camera = 0
 
-#Server Routes
+# Server Routes
+
+
 @app.route("/", methods=['GET'])
 def home():
     return render_template("main.html")
+
 
 @app.route("/new_player", methods=["POST"])
 def new_player():
@@ -44,10 +47,11 @@ def new_player():
 
     return redirect(url_for("game", player=json.dumps(player.__dict__)))
 
+
 @app.route("/game/<player>", methods=["GET", "POST"])
 def game(player):
     player = json.loads(player)
-    
+
     try:
         player = players[player["id"]]
     except:
@@ -55,9 +59,10 @@ def game(player):
 
     if request.method == "GET":
         return render_template("game.html", player=player)
-    
+
     if request.method == "POST":
         return jsonify(player.__dict__)
+
 
 @app.route("/<player_id>/rotate:<rotation>", methods=["POST"])
 def rotate(player_id, rotation):
@@ -74,22 +79,27 @@ def startup():
     global camera, projMtx, cameraMtx, distCoeffs
     cmd = input("Press enter to start calibration: ")
 
-    cameraMtx, distCoeffs = calibration.calibrateCamera(camera)
+    cameraMtx, distCoeffs, projMtx = calibration.calibrateCamera(camera)
 
     print("Camera calibration complete with the following matrices...")
     print(cameraMtx)
     print(distCoeffs)
-    
+
     input("Press enter to continue...")
 
-    projMtx = calibration.calibrateProjection(camera)
+    found, tempProjMtx = calibration.calibrateProjection(camera)
+
+    if found:
+        projMtx = tempProjMtx
 
     print("Projection calibrated with the following matrix...")
     print(projMtx)
 
-    input ("Press enter to continue...")
+    input("Press enter to continue...")
 
-# startup()
+
+startup()
+
 
 def confirm_matrices():
     global projMtx, cameraMtx, distCoeffs
@@ -100,12 +110,13 @@ def confirm_matrices():
     print("Distortion Coefficients:")
     print(distCoeffs)
 
-# confirm_matrices()
+
+confirm_matrices()
 
 # marker_recognition.detect(camera, cameraMtx, distCoeffs, projMtx)
 
-# Start a new Thread and run it in the background
-# th = threading.Thread(target=marker_recognition.app)
-# th.start()
+th = threading.Thread(target=marker_recognition.detect,
+                      args=(camera, cameraMtx, distCoeffs, projMtx))
+th.start()
 app.run(host="0.0.0.0")
-# th.join() 
+th.join()
