@@ -10,7 +10,7 @@ objp[:,:2] = np.mgrid[0:9,0:6].T.reshape(-1,2)
 objpoints = []
 imgpoints = []
 
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 num = 10
 found = 0
 while(found < num):

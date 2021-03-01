@@ -4,8 +4,10 @@ import imutils
 import time
 import cv2.aruco as aruco
 
-def detect(cameraMtx, distCoeff, projMtx):
-    cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+def detect(camera, cameraMtx, distCoeff, projMtx):
+    print("STARTING MARKER DETECTION:")
+
+    cap = cv2.VideoCapture(camera, cv2.CAP_DSHOW)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 

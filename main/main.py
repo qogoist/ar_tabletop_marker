@@ -21,6 +21,8 @@ projMtx = []
 
 players = []
 
+camera = 0
+
 #Server Routes
 @app.route("/", methods=['GET'])
 def home():
@@ -48,10 +50,10 @@ def game(player):
     return render_template("game.html", player=player)
 
 def startup():
-    global projMtx, cameraMtx, distCoeffs
+    global camera, projMtx, cameraMtx, distCoeffs
     cmd = input("Press enter to start calibration: ")
 
-    cameraMtx, distCoeffs = calibration.calibrateCamera()
+    cameraMtx, distCoeffs = calibration.calibrateCamera(camera)
 
     print("Camera calibration complete with the following matrices...")
     print(cameraMtx)
@@ -59,7 +61,7 @@ def startup():
     
     input("Press enter to continue...")
 
-    projMtx = calibration.calibrateProjection()
+    projMtx = calibration.calibrateProjection(camera)
 
     print("Projection calibrated with the following matrix...")
     print(projMtx)
@@ -79,7 +81,7 @@ def confirm_matrices():
 
 confirm_matrices()
 
-marker_recognition.detect(cameraMtx, distCoeffs, projMtx)
+marker_recognition.detect(camera, cameraMtx, distCoeffs, projMtx)
 
 # Start a new Thread and run it in the background
 # th = threading.Thread(target=marker_recognition.app)

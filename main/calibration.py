@@ -6,7 +6,7 @@ projMtx = []
 mtx = []
 dist = []
 
-def calibrateCamera():
+def calibrateCamera(camera):
   global mtx, dist, projMtx
   
   calib_image = cv2.imread("main/local/pattern_chessboard.png")
@@ -22,7 +22,7 @@ def calibrateCamera():
   objpoints = []
   imgpoints = []
 
-  cap = cv2.VideoCapture(1)
+  cap = cv2.VideoCapture(camera)
   cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
   cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
@@ -82,13 +82,13 @@ def detectRectangle(cnts):
       
   return -1, False
 
-def calibrateProjection():
+def calibrateProjection(camera):
   global mtx, dist, projMtx
 
   white = np.zeros((1280, 720, 3), np.uint8)
   white[:] = (255, 255, 255)
 
-  cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+  cap = cv2.VideoCapture(camera, cv2.CAP_DSHOW)
   cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
   cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
@@ -128,7 +128,7 @@ def calibrateProjection():
     outer_rectangle, detected = detectRectangle(cnts)
 
     if detected:
-        destination_pts = np.array([[0, 0], [0, 719], [1279, 719], [1279, 0]])
+        destination_pts = np.array([[1279, 0], [0, 0], [0, 719], [1279, 719]])
         projMtx, status = cv2.findHomography(outer_rectangle, destination_pts)
         adjustedImg = cv2.warpPerspective(frame, projMtx, (1280, 720))
         # cv2.imshow(win, adjustedImg)
@@ -144,7 +144,7 @@ def calibrateProjection():
 
 
   ######### UNCOMMENT TO SAVE DIFFERENT PROJECTION IMAGES  #############
-  # cv2.imwrite("Testimage.jpg", adjustedImg)
+  cv2.imwrite("Testimage.jpg", adjustedImg)
 
   # h, w = frame.shape[:2]
   # newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
