@@ -1,5 +1,4 @@
-# AR Tabletop App thingy
-
+# AR Tabletop Marker Detection
 ## DEPENDENCIES
 
 - Python 3.8.2
