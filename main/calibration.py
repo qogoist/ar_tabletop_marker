@@ -110,8 +110,7 @@ def detectRectangle(cnts):
 def calibrateProjection(camera):
     global mtx, dist, projMtx
 
-    white = np.zeros((1280, 720, 3), np.uint8)
-    white[:] = (255, 255, 255)
+    black = np.zeros((720, 1280, 3), np.uint8)
 
     cap = cv2.VideoCapture(camera, cv2.CAP_DSHOW)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
@@ -130,8 +129,13 @@ def calibrateProjection(camera):
 
     print("Adjust threshold until the border matches the projected image")
 
+    cornerPoints = []
+    corner_pts = [[]]
+    detected = False
+    status = False
+
     while(cap.isOpened):
-        cv2.imshow("Calibration", white)
+        cv2.imshow("Calibration", black)
         ret, frame = cap.read()
         height, width, channels = frame.shape
 
@@ -139,28 +143,59 @@ def calibrateProjection(camera):
         blurIm = cv2.GaussianBlur(gray, (blur, blur), 0)
         thresh = cv2.threshold(blurIm, tr, 255, cv2.THRESH_BINARY)[1]
 
-        # cv2.imshow(win, thresh)
+        # cv2.imshow("Thres", thresh)
 
         contour_frame = frame.copy()
+
+        if len(cornerPoints) == 0:
+            black[:] = (0, 0, 0)
+            cv2.rectangle(black, (0, 0), (20, 20,), (255, 255, 255), -1)
+        if len(cornerPoints) == 1:
+            black[:] = (0, 0, 0)
+            cv2.rectangle(black, (1260, 0), (1280, 20,), (255, 255, 255), -1)
+        if len(cornerPoints) == 2:
+            black[:] = (0, 0, 0)
+            cv2.rectangle(black, (0, 700), (20, 720), (255, 255, 255), -1)
+        if len(cornerPoints) == 3:
+            black[:] = (0, 0, 0)
+            cv2.rectangle(black, (1260, 700), (1280, 720), (255, 255, 255), -1)
+        if len(cornerPoints) > 3:
+            black[:] = (0, 0, 0)
+            cv2.circle(contour_frame, cornerPoints[0], 5, (255, 0, 0), -1)
+            cv2.circle(contour_frame, cornerPoints[1], 5, (255, 0, 0), -1)
+            cv2.circle(contour_frame, cornerPoints[2], 5, (255, 0, 0), -1)
+            cv2.circle(contour_frame, cornerPoints[3], 5, (255, 0, 0), -1)
+            detected = True
 
         cnts = cv2.findContours(
             thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
 
-        for c in cnts:
+        rect = detectRectangle(cnts)
+
+        xCenter = 0
+        yCenter = 0
+        for c in rect:
+            M = cv2.moments(c)
+            if M["m00"] != 0:
+                xCenter = int(M["m10"] / M["m00"])
+                yCenter = int(M["m01"] / M["m00"])
             cv2.drawContours(contour_frame, [c], -1, (0, 255, 0), 2)
+            cv2.circle(contour_frame, (xCenter, yCenter), 5, (255, 0, 0), -1)
 
         cv2.imshow(win, contour_frame)
 
-        outer_rectangle, detected = detectRectangle(cnts)
-
         if detected:
             destination_pts = np.array(
-                [[0, 0], [0, 719], [1279, 719], [1279, 0]])
-            projMtx, status = cv2.findHomography(
-                outer_rectangle, destination_pts)
-            adjustedImg = cv2.warpPerspective(frame, projMtx, (1280, 720))
-            # cv2.imshow(win, adjustedImg)
+                [[10, 10], [1270, 10], [10, 710], [1270, 710]])
+            projMtx, mask = cv2.findHomography(
+                corner_pts, destination_pts)
+            status = True
+            # adjustedImg = cv2.warpPerspective(frame, projMtx, (1280, 720))
+            # cv2.imshow("Adjusted", adjustedImg)
+
+        if status:
+            break
 
         key = cv2.waitKey(1)
         if key == ord("q"):
@@ -168,7 +203,15 @@ def calibrateProjection(camera):
             cv2.destroyAllWindows()
             return False, -1
         elif key == 13:
-            break
+            if len(cornerPoints) < 4:
+                cornerPoints.append((xCenter, yCenter))
+                print((xCenter, yCenter))
+
+            if len(cornerPoints) == 4:
+                corner_pts = np.array([[cornerPoints[0][0], cornerPoints[0][1]],
+                                       [cornerPoints[1][0], cornerPoints[1][1]],
+                                       [cornerPoints[2][0], cornerPoints[2][1]],
+                                       [cornerPoints[3][0], cornerPoints[3][1]]])
 
     # Release capture and close windows
     cap.release()
@@ -190,5 +233,6 @@ def calibrateProjection(camera):
 
     return True, projMtx
 
+
 # calibrateCamera()
-# calibrateProjection()
+calibrateProjection(0)
